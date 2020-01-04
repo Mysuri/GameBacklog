@@ -3,20 +3,16 @@ package com.example.gamebacklog.ui
 import android.os.Bundle
 import android.view.MenuItem
 import android.widget.Toast
-import com.google.android.material.snackbar.Snackbar
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProviders
 import com.example.gamebacklog.R
-import com.example.gamebacklog.database.Converters
 import com.example.gamebacklog.model.Game
 
 import kotlinx.android.synthetic.main.activity_add.*
 import kotlinx.android.synthetic.main.content_add.*
-import java.lang.Exception
-import java.time.LocalDate
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.util.*
+import java.text.SimpleDateFormat
+
 
 private lateinit var addActivityViewModel: AddActivityViewModel
 
@@ -46,11 +42,17 @@ class AddActivity : AppCompatActivity() {
         val month = etMonth.text.toString()
         val year = etYear.text.toString()
 
+        if (day.isNullOrEmpty() || month.isNullOrEmpty() || year.isNullOrEmpty()) {
+            Toast.makeText(this, "You must fill in a correct date!", Toast.LENGTH_LONG).show()
+            return
+        }
+
         val date = convertToDate(day, month, year)
 
-        if(title.isNotBlank() && platform.isNotBlank() && day.isNotBlank()
-            && month.isNotBlank() && year.isNotBlank()) {
-            if(date != null) {
+        if (title.isNotBlank() && platform.isNotBlank() && day.isNotBlank()
+            && month.isNotBlank() && year.isNotBlank()
+        ) {
+            if (date != null) {
                 val game = Game(title, platform, date)
                 addActivityViewModel.insertGame(game)
                 finish()
@@ -61,17 +63,18 @@ class AddActivity : AppCompatActivity() {
     }
 
     private fun convertToDate(day: String, month: String, year: String): Date? {
-        val formatter = DateTimeFormatter.ofPattern("dd MM yyyy")
-        var localDate: LocalDate?
-        var date: Date? = null
-        try {
-            localDate = LocalDate.parse(("$day $month $year"), formatter)
-            date = Date.from(localDate.atStartOfDay(ZoneId.systemDefault()).toInstant())
+        val string = "$day $month $year"
+        val format = SimpleDateFormat("dd MM yyyy", Locale.ENGLISH)
+        val date = format.parse(string)
 
-        } catch (e: Exception) {
-            Toast.makeText(this, "Please give correct date", Toast.LENGTH_LONG).show()
+        val currentDate = getCurrentDate()
+        val format2 = SimpleDateFormat("dd MM yyyy", Locale.ENGLISH)
+        val date2 = format2.parse(currentDate)
+
+        if (date.before(date2)) {
+            Toast.makeText(this, "Please give a correct date", Toast.LENGTH_LONG).show()
+            return null
         }
-
         return date
     }
 
@@ -87,6 +90,11 @@ class AddActivity : AppCompatActivity() {
             }
             else -> return super.onOptionsItemSelected(item)
         }
+    }
+
+    private fun getCurrentDate(): String {
+        val pattern = "dd MM yyyy"
+        return SimpleDateFormat(pattern).format(Date())
     }
 
 }
